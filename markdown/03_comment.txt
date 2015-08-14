@@ -1,0 +1,107 @@
+# コメント機能の追加
+
+---
+
+## コメントのscaffold
+
+```
+$ rails g scaffold comment user_name:string body:text idea_id:integer
+$ rake db:migrate
+```
+
+---
+
+## コメントとアイデアの関連づけ
+
+コメントはアイデアに紐付いていて…
+
+`app/models/comment.rb`
+
+```
+class Comment < ActiveRecord::Base
+  belongs_to :idea
+end
+```
+
+アイデアはコメントを複数持っています。
+
+`app/models/idea.rb`
+
+```
+class Idea < ActiveRecord::Base
+  has_many :comments
+
+  mount_uploader :picture, PictureUploader
+end
+```
+
+---
+## 表示の調整
+
+### ビューの調整
+
+`app/views/ideas/show.html.erb`に下記を追加
+
+```
+  :
+  :
+<p>
+  <strong>Picture:</strong>
+  <%= image_tag(@idea.picture_url, width: 600) if @idea.picture.present? %>
+</p>
+
+<h3>Comments</h3>
+<% @comments.each do |comment| %>
+  <div>
+    <strong><%= comment.user_name %></strong>
+    <br />
+    <p><%= comment.body %></p>
+    <p><%= link_to 'Delete', comment_path(comment), method: :delete, data: { confirm: '削除してもよろしいですか？' } %></p>
+  </div>
+<% end %>
+<%= render 'comments/form' %>
+  :
+  :
+```
+
+---
+
+### コントローラーの調整
+
+`app/controllers/ideas_controller.rb`のshowメソッドにコメントをすべて読み込むようにする。
+
+```
+def show
+  @comments = @idea.comments.all
+  @comment = @idea.comments.build
+end
+```
+
+### コメントのフォームの調整
+
+`app/views/comments/_form.html.erb`を変える。
+
+```
+<div class="field">
+  <%= f.label :body %><br>
+  <%= f.text_area :body %>
+</div>
+<div class="field">
+  <%= f.label :idea_id %><br>
+  <%= f.number_field :idea_id %>
+</div>
+```
+
+```
+<div class="field">
+  <%= f.label :body %><br>
+  <%= f.text_area :body %>
+</div>
+<%= f.hidden_field :idea_id %>
+```
+
+---
+
+## 参考
+
+[Rails Girls コメント機能](http://railsgirls.jp/commenting/)
